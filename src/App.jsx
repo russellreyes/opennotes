@@ -9,7 +9,7 @@ function App() {
     useEffect(() => {
         const wsUrl = import.meta.env.PROD
             ? import.meta.env.VITE_WS_URL
-            : 'ws://localhost:8082';
+            : 'ws://localhost:3000';
         const ws = new WebSocket(wsUrl);
 
         ws.onopen = () => {

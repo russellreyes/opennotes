@@ -1,7 +1,19 @@
+import http from 'http';
 import WebSocket, { WebSocketServer } from 'ws';
 
-const wss = new WebSocketServer({ port: 8082 }, () => {
-    console.log('WebSocket server running on port 8082');
+const port = process.env.PORT ? parseInt(process.env.PORT) : 3000;
+
+// Create an HTTP server for health checks and reverse proxies
+const server = http.createServer((req, res) => {
+    res.writeHead(200, { 'Content-Type': 'text/plain' });
+    res.end('OK');
+});
+
+// Attach WebSocket server to the HTTP server so proxies can upgrade
+const wss = new WebSocketServer({ server });
+
+server.listen(port, () => {
+    console.log(`HTTP server listening on port ${port}`);
 });
 
 let sharedContent = '';
