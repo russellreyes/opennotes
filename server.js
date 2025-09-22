@@ -10,11 +10,33 @@ const server = http.createServer((req, res) => {
 });
 
 // Attach WebSocket server to the HTTP server so proxies can upgrade
-const wss = new WebSocketServer({ server });
+const wss = new WebSocketServer({ noServer: true });
+
+// Explicitly handle HTTP upgrade for better proxy compatibility
+server.on('upgrade', (request, socket, head) => {
+    wss.handleUpgrade(request, socket, head, (ws) => {
+        wss.emit('connection', ws, request);
+    });
+});
 
 server.listen(port, () => {
     console.log(`HTTP server listening on port ${port}`);
 });
+
+// Heartbeat to keep connections alive behind proxies
+function startHeartbeat() {
+    const heartbeatIntervalMs = 30000;
+    const interval = setInterval(() => {
+        wss.clients.forEach((client) => {
+            if (client.readyState === WebSocket.OPEN) {
+                try { client.ping(); } catch (e) {}
+            }
+        });
+    }, heartbeatIntervalMs);
+    return interval;
+}
+
+startHeartbeat();
 
 let sharedContent = '';
 
